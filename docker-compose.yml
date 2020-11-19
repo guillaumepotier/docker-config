@@ -1,0 +1,45 @@
+version: '2'
+services:
+  influxdb:
+    image: influxdb:1.5.4-alpine
+    ports:
+      - "8086:8086"
+  chronograf:
+    image: chronograf:1.5.0-alpine
+    depends_on:
+      - influxdb
+    command: chronograf --influxdb-url=http://influxdb:8086
+    ports:
+      - "8889:8888"
+  telegraf:
+    image: telegraf:1.5.3
+    links:
+      - influxdb
+    volumes:
+      - ./dockerfile/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    ports:
+      - 8092:8092/udp
+  db:
+    container_name: wbly_db
+    image: percona:5.7.10
+    mem_limit: 500M
+    command: mysqld --sql_mode=""
+    environment:
+        - MYSQL_ROOT_PASSWORD=root
+        - MYSQL_DATABASE=wisembly_prod
+        - TERM=screen
+    # volumes:
+    #     - ./dockerfile/mysql/conf.d:/etc/mysql/conf.d:ro
+    ports:
+        - "3306:3306"
+  amqp:
+    container_name: wbly_amqp
+    image: rabbitmq:3.6-management-alpine
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+  smtp:
+    image: mailhog/mailhog
+    ports:
+      - 1080:8025
+      - 1025:1025
