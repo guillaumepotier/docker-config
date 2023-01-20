@@ -1,24 +1,48 @@
 version: '2'
+
+volumes:
+  mysqldata: ~
+  appdata: ~
+
 services:
-  influxdb:
-    image: influxdb:1.5.4-alpine
-    ports:
-      - "8086:8086"
-  chronograf:
-    image: chronograf:1.5.0-alpine
-    depends_on:
-      - influxdb
-    command: chronograf --influxdb-url=http://influxdb:8086
-    ports:
-      - "8889:8888"
-  telegraf:
-    image: telegraf:1.5.3
-    links:
-      - influxdb
-    volumes:
-      - ./dockerfile/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
-    ports:
-      - 8092:8092/udp
+  # wbly_api:
+  #   build: ./dockerfile/api
+  #   image: php:7.1-apache
+  #   depends_on:
+  #     - db
+  #     - redis
+  #     - amqp
+  #     - smtp
+  #     - influxdb
+  #     - telegraf
+  #   volumes:
+  #       - /Users/guillaumepotier/Sites/wisembly-back:/var/www/html:cached
+  #       - appdata:/var/www/html/app/cache
+  #       - appdata:/var/www/html/app/logs
+  #       - /Users/guillaumepotier/Sites/wisembly-back/vendor:/var/www/html/vendor:delegated
+  #   working_dir: /var/www/html
+  #   ports:
+  #       - "80:80"
+  #       - "443:443"
+  # influxdb:
+  #   image: influxdb:1.5.4-alpine
+  #   ports:
+  #     - "8086:8086"
+  # chronograf:
+  #   image: chronograf:1.5.0-alpine
+  #   depends_on:
+  #     - influxdb
+  #   command: chronograf --influxdb-url=http://influxdb:8086
+  #   ports:
+  #     - "8889:8888"
+  # telegraf:
+  #   image: telegraf:1.5.3
+  #   links:
+  #     - influxdb
+  #   volumes:
+  #     - ./dockerfile/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+  #   ports:
+  #     - 8092:8092/udp
   db:
     container_name: wbly_db
     image: percona:5.7.10
@@ -28,8 +52,9 @@ services:
         - MYSQL_ROOT_PASSWORD=root
         - MYSQL_DATABASE=wisembly_prod
         - TERM=screen
-    # volumes:
-    #     - ./dockerfile/mysql/conf.d:/etc/mysql/conf.d:ro
+    volumes:
+        - mysqldata:/var/lib/mysql
+        - ./dockerfile/mysql/conf.d:/etc/mysql/conf.d:ro
     ports:
         - "3306:3306"
   amqp:
@@ -43,3 +68,10 @@ services:
     ports:
       - 1080:8025
       - 1025:1025
+  redis:
+    container_name: wbly_redis
+    image: redis:3.2.6-alpine
+    ports:
+        - "6379:6379"
+    environment:
+        TERM: screen
